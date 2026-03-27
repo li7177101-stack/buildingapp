@@ -1,0 +1,70 @@
+#:kivy 2.1.0
+#:import get_color_from_hex kivy.utils.get_color_from_hex
+
+<LoginScreen>:
+    name: 'login'
+
+    FloatLayout:
+        # 封面图片 - 铺满整个界面
+        Image:
+            source: 'images/cover.jpg'
+            allow_stretch: True
+            keep_ratio: False
+            size_hint: 1, 1
+            pos_hint: {"x": 0, "y": 0}
+
+        # 毛玻璃效果卡片 - 置底
+        MDCard:
+            size_hint: 1, None
+            height: '320dp'
+            pos_hint: {"x": 0, "y": 0}
+            elevation: 0
+            radius: [0, 0, 0, 0]  # 无圆角，直角贴底
+            md_bg_color: 1, 1, 1, 0.65  # 半透明白色
+
+            BoxLayout:
+                orientation: 'vertical'
+                spacing: '15dp'
+                padding: ['30dp', '30dp', '30dp', '30dp']
+
+                MDTextField:
+                    id: username
+                    hint_text: "用户名"
+                    mode: "fill"  # 填充模式
+                    size_hint_y: None
+                    height: '56dp'
+                    icon_left: "account"
+                    fill_color: 1, 1, 1, 0.3
+
+                MDTextField:
+                    id: password
+                    hint_text: "密码"
+                    mode: "fill"
+                    size_hint_y: None
+                    height: '56dp'
+                    password: True
+                    icon_left: "lock"
+                    fill_color: 1, 1, 1, 0.3
+
+                Widget:
+                    size_hint_y: None
+                    height: '10dp'
+
+                MDRaisedButton:
+                    text: "注册/登录"
+                    size_hint_y: None
+                    height: '50dp'
+                    size_hint_x: 1
+                    on_release: root.user_login()
+                    md_bg_color: app.theme_cls.primary_color
+                    corner_radius: 25  # 大圆角
+
+                MDRectangleFlatButton:
+                    text: "以游客身份访问"
+                    size_hint_y: None
+                    height: '50dp'
+                    size_hint_x: 1
+                    theme_text_color: "Custom"
+                    text_color: app.theme_cls.primary_color
+                    corner_radius: 25
+                    on_release: root.guest_login()
