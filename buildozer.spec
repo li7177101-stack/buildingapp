@@ -16,7 +16,7 @@ source.exclude_dirs = tests, bin, venv, __pycache__, .venv, .idea
 version = 1.0.0
 
 # 依赖（固定版本避免网络问题）
-requirements = python3==3.14.2,kivy==2.1.0,kivymd==1.1.1,requests,Pillow,pycryptodome
+requirements = python3==3.11.6,kivy==2.1.0,kivymd==1.1.1,requests,Pillow,pycryptodome
 
 # 界面设置
 orientation = portrait
