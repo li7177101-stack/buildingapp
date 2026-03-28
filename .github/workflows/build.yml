@@ -35,25 +35,26 @@ jobs:
           rm -rf ~/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/other_builds/hostpython3
           rm -rf ~/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/other_builds/python3
       
+      - name: Force Python 3.11 for hostpython3
+        run: |
+          # 修改 p4a 配置，强制使用 Python 3.11
+          mkdir -p ~/.buildozer/android/platform/python-for-android/pythonforandroid/recipes/hostpython3
+          cat > ~/.buildozer/android/platform/python-for-android/pythonforandroid/recipes/hostpython3/__init__.py << 'EOF'
+          from pythonforandroid.recipe import PythonRecipe
+
+          class HostPython3Recipe(PythonRecipe):
+              version = "3.11.6"
+              url = "https://github.com/python/cpython/archive/refs/tags/v{version}.tar.gz"
+              depends = []
+              install_in_hostpython = False
+
+          recipe = HostPython3Recipe()
+          EOF
+      
       - name: Build APK with verbose logging
         run: |
-          set -x
           buildozer android debug -v 2>&1 | tee build.log
-          exit_code=${PIPESTATUS[0]}
-          if [ $exit_code -ne 0 ]; then
-            echo ""
-            echo "========================================"
-            echo "❌ BUILD FAILED with exit code: $exit_code"
-            echo "========================================"
-            echo ""
-            echo "--- Last 200 lines of build.log ---"
-            tail -200 build.log
-            echo "--- End of log ---"
-            echo ""
-            echo "Searching for common error patterns..."
-            grep -i -E "error|fatal|traceback|failed" build.log | tail -50
-          fi
-          exit $exit_code
+          exit ${PIPESTATUS[0]}
       
       - name: Upload build log
         if: failure()
