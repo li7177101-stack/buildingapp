@@ -30,38 +30,22 @@ jobs:
           sudo apt install -y git zip unzip openjdk-17-jdk autoconf automake autoconf-archive libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev
           pip install buildozer cython
       
-      - name: Clean old hostpython3 cache
+      - name: Download Python 3.11 for hostpython3
+        run: |
+          mkdir -p ~/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/packages/hostpython3
+          cd ~/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/packages/hostpython3
+          wget https://github.com/python/cpython/archive/refs/tags/v3.11.6.tar.gz
+          mv v3.11.6.tar.gz v3.14.2.tar.gz
+          touch .mark-v3.14.2.tar.gz
+          ls -lh
+      
+      - name: Clean old cache
         run: |
           rm -rf ~/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/other_builds/hostpython3
           rm -rf ~/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/other_builds/python3
       
-      - name: Force Python 3.11 for hostpython3
-        run: |
-          # 修改 p4a 配置，强制使用 Python 3.11
-          mkdir -p ~/.buildozer/android/platform/python-for-android/pythonforandroid/recipes/hostpython3
-          cat > ~/.buildozer/android/platform/python-for-android/pythonforandroid/recipes/hostpython3/__init__.py << 'EOF'
-          from pythonforandroid.recipe import PythonRecipe
-
-          class HostPython3Recipe(PythonRecipe):
-              version = "3.11.6"
-              url = "https://github.com/python/cpython/archive/refs/tags/v{version}.tar.gz"
-              depends = []
-              install_in_hostpython = False
-
-          recipe = HostPython3Recipe()
-          EOF
-      
-      - name: Build APK with verbose logging
-        run: |
-          buildozer android debug -v 2>&1 | tee build.log
-          exit ${PIPESTATUS[0]}
-      
-      - name: Upload build log
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: build.log
+      - name: Build APK
+        run: buildozer android debug -v
       
       - name: Upload APK
         if: success()
