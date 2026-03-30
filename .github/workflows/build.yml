@@ -26,27 +26,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install buildozer cython
 
-      - name: First run to download p4a
+      - name: Add custom hostpython3 URL to buildozer.spec
         run: |
-          # 运行一次 buildozer，让它下载 python-for-android
-          buildozer android debug || true
-          # 等待 p4a 下载完成
-          sleep 5
+          echo "" >> buildozer.spec
+          echo "# 强制使用 Python 3.11.6 作为 hostpython3" >> buildozer.spec
+          echo "p4a.hostpython3_url = https://github.com/python/cpython/archive/refs/tags/v3.11.6.tar.gz" >> buildozer.spec
+          echo "p4a.hostpython3_version = 3.11.6" >> buildozer.spec
+          echo "requirements = python3==3.11.6,kivy==2.1.0" >> buildozer.spec
 
-      - name: Patch p4a to use Python 3.11
+      - name: Clean old p4a cache
         run: |
-          # 查找 p4a 安装位置（在 .buildozer 目录中）
-          P4A_PATH="./.buildozer/android/platform/python-for-android/pythonforandroid"
-          if [ -d "$P4A_PATH" ]; then
-            echo "Found p4a at $P4A_PATH"
-            # 修改 hostpython3 配方
-            sed -i 's/version = "3.14.2"/version = "3.11.6"/g' $P4A_PATH/recipes/hostpython3/__init__.py
-            sed -i 's/url = "https:\/\/github.com\/python\/cpython\/archive\/refs\/tags\/v{version}.tar.gz"/url = "https:\/\/github.com\/python\/cpython\/archive\/refs\/tags\/v3.11.6.tar.gz"/g' $P4A_PATH/recipes/hostpython3/__init__.py
-            echo "Patched hostpython3 recipe"
-          else
-            echo "p4a not found at $P4A_PATH"
-            exit 1
-          fi
+          rm -rf .buildozer/android/platform/python-for-android
+          rm -rf .buildozer/android/platform/build-arm64-v8a_armeabi-v7a
 
       - name: Build APK
         run: buildozer android debug
