@@ -1,4 +1,3 @@
-
 [app]
 
 # 应用信息
@@ -29,12 +28,15 @@ android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE
 android.api = 30
 android.minapi = 21
 android.ndk = 28c
-# android.sdk = 30  # 已弃用，注释掉
 
-# Python-for-android 配置（关键！）
+# Python-for-android 配置
 p4a.branch = develop
 p4a.update = False
 p4a.ignore_git = True
+
+# 强制使用 Python 3.11.6 作为 hostpython3
+p4a.hostpython3_url = https://github.com/python/cpython/archive/refs/tags/v3.11.6.tar.gz
+p4a.hostpython3_version = 3.11.6
 
 # 自动接受许可证
 android.accept_sdk_license = True
@@ -42,4 +44,3 @@ android.accept_sdk_license = True
 [buildozer]
 log_level = 2
 warn_on_root = 1
-
