@@ -26,28 +26,24 @@ jobs:
           python -m pip install --upgrade pip
           pip install buildozer cython
 
-      - name: First run to download p4a
+      - name: Clone python-for-android manually
         run: |
-          # 第一次运行，让它下载 python-for-android
-          buildozer android debug || true
-          sleep 5
-
-      - name: Patch p4a to use Python 3.11
-        run: |
-          # 修改 hostpython3 版本
-          sed -i 's/version = "3.14.2"/version = "3.11.6"/g' .buildozer/android/platform/python-for-android/pythonforandroid/recipes/hostpython3/__init__.py
-          # 修改 python3 配方中的版本检查
-          sed -i 's/if _p_version.minor >= 14/if _p_version.minor >= 14 and False/g' .buildozer/android/platform/python-for-android/pythonforandroid/recipes/python3/__init__.py || true
+          mkdir -p .buildozer/android/platform
+          cd .buildozer/android/platform
+          git clone --branch develop --single-branch https://github.com/kivy/python-for-android.git
+          cd python-for-android
+          # 立即修改 hostpython3 版本
+          sed -i 's/version = "3.14.2"/version = "3.11.6"/g' pythonforandroid/recipes/hostpython3/__init__.py
+          # 修改 python3 版本检查
+          sed -i 's/if _p_version.minor >= 14/if _p_version.minor >= 14 and False/g' pythonforandroid/recipes/python3/__init__.py
           # 禁用 Kivy 补丁
-          sed -i '/patches = \[/,/\]/c\    patches = []' .buildozer/android/platform/python-for-android/pythonforandroid/recipes/kivy/__init__.py || true
-          # 跳过 libjxl
-          mkdir -p .buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/bootstrap_builds/sdl2/jni/SDL2_image/external/
-          touch .buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/bootstrap_builds/sdl2/jni/SDL2_image/external/libjxl
+          sed -i '/patches = \[/,/\]/c\    patches = []' pythonforandroid/recipes/kivy/__init__.py
           echo "Patches applied"
 
-      - name: Clean old build
+      - name: Skip libjxl compilation
         run: |
-          rm -rf .buildozer/android/platform/build-arm64-v8a_armeabi-v7a
+          mkdir -p .buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/bootstrap_builds/sdl2/jni/SDL2_image/external/
+          touch .buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/bootstrap_builds/sdl2/jni/SDL2_image/external/libjxl
 
       - name: Build APK
         run: buildozer android debug
