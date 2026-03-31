@@ -15,7 +15,7 @@ source.exclude_dirs = tests, bin, venv, __pycache__, .venv, .idea
 version = 1.0.0
 
 # 依赖 - 统一使用 Python 3.14 和 Kivy master
-requirements = python3==3.11.6,kivy==master
+requirements = python3==3.14.2,kivy==master
 
 # 界面设置
 orientation = portrait
