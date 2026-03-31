@@ -14,8 +14,8 @@ source.exclude_dirs = tests, bin, venv, __pycache__, .venv, .idea
 # 版本
 version = 1.0.0
 
-# 依赖（固定版本避免网络问题）
-requirements = python3==3.11.6,kivy==2.1.0
+# 依赖 - 统一使用 Python 3.14 和 Kivy master
+requirements = python3==3.14.2,kivy==master
 
 # 界面设置
 orientation = portrait
@@ -33,10 +33,6 @@ android.ndk = 28c
 p4a.branch = develop
 p4a.update = False
 p4a.ignore_git = True
-
-# 强制使用 Python 3.11.6 作为 hostpython3
-p4a.hostpython3_url = https://github.com/python/cpython/archive/refs/tags/v3.11.6.tar.gz
-p4a.hostpython3_version = 3.11.6
 
 # 自动接受许可证
 android.accept_sdk_license = True
