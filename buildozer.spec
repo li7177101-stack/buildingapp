@@ -14,7 +14,7 @@ source.exclude_dirs = tests, bin, venv, __pycache__, .venv, .idea
 # 版本
 version = 1.0.0
 
-# 依赖 - 统一使用 Python 3.14 和 Kivy master
+# 依赖
 requirements = python3==3.14.2,kivy==master
 
 # 界面设置
@@ -28,11 +28,16 @@ android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE
 android.api = 30
 android.minapi = 21
 android.ndk = 28c
+android.gles = 2
 
 # Python-for-android 配置
 p4a.branch = develop
 p4a.update = False
 p4a.ignore_git = True
+
+# Kivy 编译环境变量
+env.KIVY_GL_BACKEND = sdl2
+env.USE_OPENGL_ES2 = 1
 
 # 自动接受许可证
 android.accept_sdk_license = True
