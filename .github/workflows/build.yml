@@ -1,4 +1,4 @@
-name: Build APK with Python 3.11
+name: Build APK
 
 on:
   push:
@@ -21,23 +21,19 @@ jobs:
           sudo apt update
           sudo apt install -y git zip unzip openjdk-17-jdk autoconf automake autoconf-archive libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev
 
-      - name: Install Python dependencies
+      - name: Install Buildozer & Cython
         run: |
           python -m pip install --upgrade pip
           pip install buildozer cython
 
-      - name: Add custom hostpython3 URL to buildozer.spec
+      - name: Patch p4a to use Python 3.11 and skip problematic libs
         run: |
-          echo "" >> buildozer.spec
-          echo "# 强制使用 Python 3.11.6 作为 hostpython3" >> buildozer.spec
-          echo "p4a.hostpython3_url = https://github.com/python/cpython/archive/refs/tags/v3.11.6.tar.gz" >> buildozer.spec
-          echo "p4a.hostpython3_version = 3.11.6" >> buildozer.spec
-          echo "requirements = python3==3.11.6,kivy==2.1.0" >> buildozer.spec
-
-      - name: Clean old p4a cache
-        run: |
-          rm -rf .buildozer/android/platform/python-for-android
-          rm -rf .buildozer/android/platform/build-arm64-v8a_armeabi-v7a
+          sleep 10
+          sed -i 's/version = "3.14.2"/version = "3.11.6"/g' .buildozer/android/platform/python-for-android/pythonforandroid/recipes/hostpython3/__init__.py || true
+          sed -i '/patches = \[/,/\]/c\    patches = []' .buildozer/android/platform/python-for-android/pythonforandroid/recipes/kivy/__init__.py || true
+          mkdir -p .buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/bootstrap_builds/sdl2/jni/SDL2_image/external/
+          touch .buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/bootstrap_builds/sdl2/jni/SDL2_image/external/libjxl
+          echo "All patches applied."
 
       - name: Build APK
         run: buildozer android debug
