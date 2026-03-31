@@ -26,7 +26,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install buildozer cython
 
-      - name: Clone python-for-android and disable Kivy patches
+      - name: Patch p4a to disable Kivy patches
         run: |
           # 创建目录并克隆 p4a
           mkdir -p .buildozer/android/platform
@@ -34,13 +34,10 @@ jobs:
           git clone --branch develop --single-branch https://github.com/kivy/python-for-android.git
           cd python-for-android
           
-          # 修改 Kivy 配方，清空补丁列表
+          # 禁用 Kivy 补丁
           sed -i '/patches = \[/,/\]/c\    patches = []' pythonforandroid/recipes/kivy/__init__.py
           
-          # 修改 hostpython3 版本（可选，确保版本一致）
-          sed -i 's/version = "3.14.2"/version = "3.11.6"/g' pythonforandroid/recipes/hostpython3/__init__.py
-          
-          echo "Patches applied"
+          echo "Kivy patches disabled"
 
       - name: Build APK
         run: buildozer android debug
