@@ -15,7 +15,7 @@ source.exclude_dirs = tests, bin, venv, __pycache__, .venv, .idea
 version = 1.0.0
 
 # 依赖
-requirements = python3==3.14.2,kivy==master
+requirements = python3==3.9.0,kivy==2.0.0
 
 # 界面设置
 orientation = portrait
