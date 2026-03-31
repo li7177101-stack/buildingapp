@@ -26,7 +26,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install buildozer cython
 
-      - name: Patch p4a to disable Kivy patches
+      - name: Clone and patch p4a
         run: |
           # 创建目录并克隆 p4a
           mkdir -p .buildozer/android/platform
@@ -37,7 +37,10 @@ jobs:
           # 禁用 Kivy 补丁
           sed -i '/patches = \[/,/\]/c\    patches = []' pythonforandroid/recipes/kivy/__init__.py
           
-          echo "Kivy patches disabled"
+          # 设置 OpenGL ES 路径
+          sed -i '/def get_recipe_env/,/return env/a\        env["KIVY_GL_BACKEND"] = "sdl2"\n        env["USE_OPENGL_ES2"] = "1"' pythonforandroid/recipes/kivy/__init__.py
+          
+          echo "Patches applied"
 
       - name: Build APK
         run: buildozer android debug
