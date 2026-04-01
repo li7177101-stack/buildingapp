@@ -36,9 +36,13 @@ jobs:
 
       - name: Create Xcode project
         run: |
-          python -m kivy_ios.toolchain create BuildingApp ./main.py \
-            --version=1.0.0 \
-            --bundle=org.buildingapp.buildingapp
+          python -m kivy_ios.toolchain create BuildingApp ./main.py
+
+      - name: Set bundle identifier
+        run: |
+          cd ios/BuildingApp-ios
+          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier org.buildingapp.buildingapp" BuildingApp/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" BuildingApp/Info.plist
 
       - name: Install kivymd via pip
         run: |
