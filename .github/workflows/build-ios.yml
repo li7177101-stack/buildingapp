@@ -38,11 +38,29 @@ jobs:
         run: |
           python -m kivy_ios.toolchain create BuildingApp ./main.py
 
-      - name: Set bundle identifier
+      - name: Debug - List directories
         run: |
-          cd ios/BuildingApp-ios
-          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier org.buildingapp.buildingapp" BuildingApp/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" BuildingApp/Info.plist
+          echo "=== Current directory ==="
+          ls -la
+          echo "=== ios directory ==="
+          ls -la ios/ || echo "ios directory not found"
+          echo "=== ios directory contents ==="
+          find ios -name "*.plist" -type f 2>/dev/null || echo "No plist files found"
+
+      - name: Set bundle identifier and version
+        run: |
+          cd ios
+          # 查找 Info.plist 的实际位置
+          INFO_PLIST=$(find . -name "Info.plist" -type f | head -1)
+          echo "Found Info.plist at: $INFO_PLIST"
+          if [ -n "$INFO_PLIST" ]; then
+            /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier org.buildingapp.buildingapp" "$INFO_PLIST"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" "$INFO_PLIST"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1" "$INFO_PLIST"
+            echo "Bundle identifier set successfully"
+          else
+            echo "Warning: Info.plist not found"
+          fi
 
       - name: Install kivymd via pip
         run: |
@@ -51,8 +69,10 @@ jobs:
 
       - name: Add permissions to Info.plist
         run: |
-          cd ios/BuildingApp-ios/BuildingApp
-          cat >> Info.plist << 'EOF'
+          cd ios
+          INFO_PLIST=$(find . -name "Info.plist" -type f | head -1)
+          if [ -n "$INFO_PLIST" ]; then
+            cat >> "$INFO_PLIST" << 'EOF'
           <key>NSCameraUsageDescription</key>
           <string>需要相机权限来拍摄图片进行图生图转换</string>
           <key>NSPhotoLibraryUsageDescription</key>
@@ -65,6 +85,10 @@ jobs:
               <true/>
           </dict>
           EOF
+            echo "Permissions added successfully"
+          else
+            echo "Warning: Info.plist not found, skipping permissions"
+          fi
 
       - name: Build for Simulator
         run: |
@@ -81,8 +105,14 @@ jobs:
       - name: Package Simulator App
         run: |
           cd ios/build/Build/Products/Release-iphonesimulator
-          zip -r BuildingApp.app.zip BuildingApp.app
-          mv BuildingApp.app.zip ../../../../BuildingApp-simulator.zip
+          if [ -d "BuildingApp.app" ]; then
+            zip -r BuildingApp.app.zip BuildingApp.app
+            mv BuildingApp.app.zip ../../../../BuildingApp-simulator.zip
+            echo "App packaged successfully"
+          else
+            echo "Error: BuildingApp.app not found"
+            exit 1
+          fi
 
       - name: Upload Simulator App
         uses: actions/upload-artifact@v4
