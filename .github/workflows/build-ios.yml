@@ -55,31 +55,6 @@ jobs:
             echo "✅ Bundle identifier set successfully"
           else
             echo "❌ Info.plist not found!"
-            echo "Creating Info.plist manually..."
-            mkdir -p BuildingApp
-            cat > BuildingApp/Info.plist << 'PLIST'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleIdentifier</key>
-    <string>org.buildingapp.buildingapp</string>
-    <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
-    <key>CFBundleVersion</key>
-    <string>1</string>
-    <key>CFBundleName</key>
-    <string>BuildingApp</string>
-    <key>CFBundleDisplayName</key>
-    <string>建筑意向图</string>
-    <key>CFBundleExecutable</key>
-    <string>BuildingApp</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-</dict>
-</plist>
-PLIST
-            echo "✅ Created Info.plist manually"
           fi
 
       - name: Install kivymd via pip
@@ -92,20 +67,15 @@ PLIST
           cd buildingapp-ios
           INFO_PLIST=$(find . -name "Info.plist" -type f | head -1)
           if [ -n "$INFO_PLIST" ]; then
-            cat >> "$INFO_PLIST" << 'PERMISSIONS'
-          <key>NSCameraUsageDescription</key>
-          <string>需要相机权限来拍摄图片进行图生图转换</string>
-          <key>NSPhotoLibraryUsageDescription</key>
-          <string>需要访问相册来选择图片进行图生图/文生图</string>
-          <key>NSPhotoLibraryAddUsageDescription</key>
-          <string>需要保存生成的图片到相册</string>
-          <key>NSAppTransportSecurity</key>
-          <dict>
-              <key>NSAllowsArbitraryLoads</key>
-              <true/>
-          </dict>
-PERMISSIONS
+            echo "Adding permissions to $INFO_PLIST"
+            /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 需要相机权限来拍摄图片进行图生图转换" "$INFO_PLIST"
+            /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 需要访问相册来选择图片进行图生图/文生图" "$INFO_PLIST"
+            /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 需要保存生成的图片到相册" "$INFO_PLIST"
+            /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" "$INFO_PLIST"
+            /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" "$INFO_PLIST"
             echo "✅ Permissions added successfully"
+          else
+            echo "❌ Info.plist not found, skipping permissions"
           fi
 
       - name: Build for Simulator
