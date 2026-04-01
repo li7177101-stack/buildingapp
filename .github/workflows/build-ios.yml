@@ -34,23 +34,22 @@ jobs:
           python -m kivy_ios.toolchain build pillow
           python -m kivy_ios.toolchain build plyer
 
-      - name: Install kivymd via pip (no compilation needed)
+      - name: Create Xcode project
         run: |
-          # 获取 iOS 编译目录
-          cd ios
-          # 使用 kivy-ios 的 Python 安装 kivymd
-          ../dist/root/python3/bin/python3 -m pip install kivymd==1.1.1
-
-      - name: Create Xcode project with permissions
-        run: |
-          cd ios
           python -m kivy_ios.toolchain create \
             --name=BuildingApp \
             --version=1.0.0 \
             --bundle=org.buildingapp.buildingapp \
-            ../main.py
-          
-          cd BuildingApp-ios/BuildingApp
+            ./main.py
+
+      - name: Install kivymd via pip
+        run: |
+          cd ios
+          ../dist/root/python3/bin/python3 -m pip install kivymd==1.1.1
+
+      - name: Add permissions to Info.plist
+        run: |
+          cd ios/BuildingApp-ios/BuildingApp
           cat >> Info.plist << 'EOF'
           <key>NSCameraUsageDescription</key>
           <string>需要相机权限来拍摄图片进行图生图转换</string>
@@ -64,7 +63,6 @@ jobs:
               <true/>
           </dict>
           EOF
-          cd ../../..
 
       - name: Build for Simulator
         run: |
