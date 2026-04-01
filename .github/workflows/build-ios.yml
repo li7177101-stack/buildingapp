@@ -38,15 +38,53 @@ jobs:
         run: |
           python -m kivy_ios.toolchain create BuildingApp ./main.py
 
+      - name: Debug - List buildingapp-ios directory
+        run: |
+          echo "=== buildingapp-ios directory contents ==="
+          ls -la buildingapp-ios/
+          echo "=== Find all plist files ==="
+          find buildingapp-ios -name "*.plist" -type f
+          echo "=== Find all Info.plist files ==="
+          find buildingapp-ios -name "Info.plist" -type f
+
       - name: Set bundle identifier and version
         run: |
           cd buildingapp-ios
+          # 查找 Info.plist 的实际位置
           INFO_PLIST=$(find . -name "Info.plist" -type f | head -1)
           echo "Found Info.plist at: $INFO_PLIST"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier org.buildingapp.buildingapp" "$INFO_PLIST"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" "$INFO_PLIST"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1" "$INFO_PLIST"
-          echo "✅ Bundle identifier set successfully"
+          if [ -n "$INFO_PLIST" ]; then
+            /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier org.buildingapp.buildingapp" "$INFO_PLIST"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" "$INFO_PLIST"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1" "$INFO_PLIST"
+            echo "✅ Bundle identifier set successfully"
+          else
+            echo "❌ Info.plist not found!"
+            echo "Creating Info.plist manually..."
+            cat > BuildingApp/Info.plist << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>org.buildingapp.buildingapp</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleName</key>
+    <string>BuildingApp</string>
+    <key>CFBundleDisplayName</key>
+    <string>建筑意向图</string>
+    <key>CFBundleExecutable</key>
+    <string>BuildingApp</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+</dict>
+</plist>
+EOF
+            echo "✅ Created Info.plist manually"
+          fi
 
       - name: Install kivymd via pip
         run: |
@@ -57,7 +95,8 @@ jobs:
         run: |
           cd buildingapp-ios
           INFO_PLIST=$(find . -name "Info.plist" -type f | head -1)
-          cat >> "$INFO_PLIST" << 'EOF'
+          if [ -n "$INFO_PLIST" ]; then
+            cat >> "$INFO_PLIST" << 'EOF'
           <key>NSCameraUsageDescription</key>
           <string>需要相机权限来拍摄图片进行图生图转换</string>
           <key>NSPhotoLibraryUsageDescription</key>
@@ -70,7 +109,8 @@ jobs:
               <true/>
           </dict>
           EOF
-          echo "✅ Permissions added successfully"
+            echo "✅ Permissions added successfully"
+          fi
 
       - name: Build for Simulator
         run: |
