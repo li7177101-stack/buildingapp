@@ -1,0 +1,85 @@
+name: Build iOS App
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          brew install autoconf automake libtool pkg-config
+          pip install --upgrade pip
+          pip install cython kivy-ios plyer
+
+      - name: Build Python for iOS
+        run: |
+          python -m kivy_ios.toolchain build python
+
+      - name: Build Kivy and dependencies
+        run: |
+          python -m kivy_ios.toolchain build kivy
+          python -m kivy_ios.toolchain build pillow
+          python -m kivy_ios.toolchain build kivymd
+          python -m kivy_ios.toolchain build plyer
+
+      - name: Create Xcode project with permissions
+        run: |
+          python -m kivy_ios.toolchain create \
+            --name=BuildingApp \
+            --version=1.0.0 \
+            --bundle=org.buildingapp.buildingapp \
+            ./main.py
+          
+          # 添加权限配置到 Info.plist
+          cd ios/BuildingApp-ios/BuildingApp
+          cat >> Info.plist << 'EOF'
+          <key>NSCameraUsageDescription</key>
+          <string>需要相机权限来拍摄图片进行图生图转换</string>
+          <key>NSPhotoLibraryUsageDescription</key>
+          <string>需要访问相册来选择图片进行图生图/文生图</string>
+          <key>NSPhotoLibraryAddUsageDescription</key>
+          <string>需要保存生成的图片到相册</string>
+          <key>NSAppTransportSecurity</key>
+          <dict>
+              <key>NSAllowsArbitraryLoads</key>
+              <true/>
+          </dict>
+          EOF
+          cd ../../..
+
+      - name: Build for Simulator
+        run: |
+          cd ios
+          xcodebuild -workspace BuildingApp.xcworkspace \
+            -scheme BuildingApp \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Package Simulator App
+        run: |
+          cd ios/build/Build/Products/Release-iphonesimulator
+          zip -r BuildingApp.app.zip BuildingApp.app
+          mv BuildingApp.app.zip ../../../../BuildingApp-simulator.zip
+
+      - name: Upload Simulator App
+        uses: actions/upload-artifact@v4
+        with:
+          name: BuildingApp-simulator
+          path: BuildingApp-simulator.zip
