@@ -50,7 +50,6 @@ jobs:
       - name: Set bundle identifier and version
         run: |
           cd buildingapp-ios
-          # 查找 Info.plist 的实际位置
           INFO_PLIST=$(find . -name "Info.plist" -type f | head -1)
           echo "Found Info.plist at: $INFO_PLIST"
           if [ -n "$INFO_PLIST" ]; then
@@ -61,7 +60,8 @@ jobs:
           else
             echo "❌ Info.plist not found!"
             echo "Creating Info.plist manually..."
-            cat > BuildingApp/Info.plist << 'EOF'
+            mkdir -p BuildingApp
+            cat > BuildingApp/Info.plist << 'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -82,7 +82,7 @@ jobs:
     <string>APPL</string>
 </dict>
 </plist>
-EOF
+PLIST
             echo "✅ Created Info.plist manually"
           fi
 
@@ -96,7 +96,7 @@ EOF
           cd buildingapp-ios
           INFO_PLIST=$(find . -name "Info.plist" -type f | head -1)
           if [ -n "$INFO_PLIST" ]; then
-            cat >> "$INFO_PLIST" << 'EOF'
+            cat >> "$INFO_PLIST" << 'PERMISSIONS'
           <key>NSCameraUsageDescription</key>
           <string>需要相机权限来拍摄图片进行图生图转换</string>
           <key>NSPhotoLibraryUsageDescription</key>
@@ -108,7 +108,7 @@ EOF
               <key>NSAllowsArbitraryLoads</key>
               <true/>
           </dict>
-          EOF
+PERMISSIONS
             echo "✅ Permissions added successfully"
           fi
 
