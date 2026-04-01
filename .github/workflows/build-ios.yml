@@ -34,55 +34,44 @@ jobs:
         run: |
           python -m kivy_ios.toolchain create BuildingApp ./main.py
 
-      - name: Debug - List buildingapp-ios directory
-        run: |
-          echo "=== buildingapp-ios directory contents ==="
-          ls -la buildingapp-ios/
-          echo "=== Find all plist files ==="
-          find buildingapp-ios -name "*.plist" -type f
-          echo "=== Find all Info.plist files ==="
-          find buildingapp-ios -name "Info.plist" -type f
-
       - name: Set bundle identifier and version
         run: |
           cd buildingapp-ios
-          INFO_PLIST=$(find . -name "Info.plist" -type f | head -1)
-          echo "Found Info.plist at: $INFO_PLIST"
-          if [ -n "$INFO_PLIST" ]; then
-            /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier org.buildingapp.buildingapp" "$INFO_PLIST"
-            /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" "$INFO_PLIST"
-            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1" "$INFO_PLIST"
-            echo "✅ Bundle identifier set successfully"
-          else
-            echo "❌ Info.plist not found!"
-          fi
+          # 使用 buildingapp-Info.plist 文件
+          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier org.buildingapp.buildingapp" buildingapp-Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" buildingapp-Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1" buildingapp-Info.plist
+          echo "✅ Bundle identifier set successfully"
 
       - name: Install kivymd via pip
         run: |
           cd buildingapp-ios
-          ../dist/root/python3/bin/python3 -m pip install kivymd==1.1.1
+          # 找到正确的 Python 路径
+          PYTHON_PATH=$(find ../dist -name "python3" -type f 2>/dev/null | head -1)
+          if [ -n "$PYTHON_PATH" ]; then
+            $PYTHON_PATH -m pip install kivymd==1.1.1
+            echo "✅ kivymd installed successfully"
+          else
+            echo "❌ Python not found in dist directory"
+            ls -la ../dist/
+            exit 1
+          fi
 
       - name: Add permissions to Info.plist
         run: |
           cd buildingapp-ios
-          INFO_PLIST=$(find . -name "Info.plist" -type f | head -1)
-          if [ -n "$INFO_PLIST" ]; then
-            echo "Adding permissions to $INFO_PLIST"
-            /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 需要相机权限来拍摄图片进行图生图转换" "$INFO_PLIST"
-            /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 需要访问相册来选择图片进行图生图/文生图" "$INFO_PLIST"
-            /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 需要保存生成的图片到相册" "$INFO_PLIST"
-            /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" "$INFO_PLIST"
-            /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" "$INFO_PLIST"
-            echo "✅ Permissions added successfully"
-          else
-            echo "❌ Info.plist not found, skipping permissions"
-          fi
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 需要相机权限来拍摄图片进行图生图转换" buildingapp-Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 需要访问相册来选择图片进行图生图/文生图" buildingapp-Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 需要保存生成的图片到相册" buildingapp-Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" buildingapp-Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" buildingapp-Info.plist || true
+          echo "✅ Permissions added successfully"
 
       - name: Build for Simulator
         run: |
           cd buildingapp-ios
-          xcodebuild -workspace BuildingApp.xcworkspace \
-            -scheme BuildingApp \
+          xcodebuild -workspace buildingapp.xcworkspace \
+            -scheme buildingapp \
             -configuration Release \
             -sdk iphonesimulator \
             -derivedDataPath build \
@@ -93,12 +82,12 @@ jobs:
       - name: Package Simulator App
         run: |
           cd buildingapp-ios/build/Build/Products/Release-iphonesimulator
-          if [ -d "BuildingApp.app" ]; then
-            zip -r BuildingApp.app.zip BuildingApp.app
+          if [ -d "buildingapp.app" ]; then
+            zip -r BuildingApp.app.zip buildingapp.app
             mv BuildingApp.app.zip ../../../../
             echo "✅ App packaged successfully"
           else
-            echo "❌ Error: BuildingApp.app not found"
+            echo "❌ Error: buildingapp.app not found"
             ls -la
             exit 1
           fi
