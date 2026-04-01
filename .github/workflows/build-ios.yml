@@ -42,33 +42,12 @@ jobs:
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1" buildingapp-Info.plist
           echo "✅ Bundle identifier set successfully"
 
-      - name: Debug - Check dist directory structure
-        run: |
-          echo "=== dist directory ==="
-          ls -la dist/
-          echo "=== dist/root directory ==="
-          ls -la dist/root/ || echo "root not found"
-          echo "=== dist/root/python3 directory ==="
-          ls -la dist/root/python3/ || echo "python3 not found"
-          echo "=== dist/root/python3/bin directory ==="
-          ls -la dist/root/python3/bin/ || echo "bin not found"
-
       - name: Install kivymd via pip
         run: |
+          # 使用 hostpython3 的 Python 安装 kivymd
           cd buildingapp-ios
-          # 尝试多个可能的 Python 路径
-          if [ -f "../dist/root/python3/bin/python3" ]; then
-            ../dist/root/python3/bin/python3 -m pip install kivymd==1.1.1
-            echo "✅ kivymd installed successfully"
-          elif [ -f "../dist/root/python3/bin/python" ]; then
-            ../dist/root/python3/bin/python -m pip install kivymd==1.1.1
-            echo "✅ kivymd installed successfully"
-          else
-            echo "❌ Python not found"
-            echo "Searching for python in dist..."
-            find ../dist -name "python*" -type f 2>/dev/null
-            exit 1
-          fi
+          ../dist/hostpython3/bin/python3 -m pip install kivymd==1.1.1
+          echo "✅ kivymd installed successfully"
 
       - name: Add permissions to Info.plist
         run: |
