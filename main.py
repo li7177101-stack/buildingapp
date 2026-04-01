@@ -7,6 +7,7 @@
 import os
 import sys
 from kivy.config import Config
+from kivy.utils import platform
 
 # ===== 输入法优化配置 =====
 os.environ['KIVY_IME'] = '1'
@@ -40,17 +41,24 @@ from building_app.screens.img_to_img_screen import ImgToImgScreen
 
 # 注册中文字体
 def register_chinese_font():
-    """注册中文字体"""
+    """注册中文字体（跨平台兼容）"""
+    if platform in ('ios', 'android'):
+        # iOS 和 Android 系统自带中文字体，Kivy 会自动处理
+        print("✅ 使用系统默认字体（iOS/Android）")
+        return True
+    
+    # Windows/Linux 开发环境：尝试加载本地中文字体
     font_paths = [
         'C:\\Windows\\Fonts\\msyh.ttc',
         'C:\\Windows\\Fonts\\simhei.ttf',
         'C:\\Windows\\Fonts\\simsun.ttc',
+        '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc',  # Linux
+        '/System/Library/Fonts/PingFang.ttc',  # macOS
     ]
 
     for font_path in font_paths:
         if os.path.exists(font_path):
             try:
-                # 注册为多个名称，确保可用
                 LabelBase.register(name='Roboto', fn_regular=font_path)
                 LabelBase.register(name='ChineseFont', fn_regular=font_path)
                 print(f"✅ 成功加载中文字体: {font_path}")
@@ -59,7 +67,7 @@ def register_chinese_font():
                 print(f"字体加载失败 {font_path}: {e}")
                 continue
 
-    print("⚠️ 未找到中文字体")
+    print("⚠️ 未找到中文字体，将使用系统默认字体")
     return False
 
 
