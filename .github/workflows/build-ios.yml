@@ -36,11 +36,9 @@ jobs:
 
       - name: Create Xcode project
         run: |
-          python -m kivy_ios.toolchain create \
-            --name=BuildingApp \
+          python -m kivy_ios.toolchain create BuildingApp ./main.py \
             --version=1.0.0 \
-            --bundle=org.buildingapp.buildingapp \
-            ./main.py
+            --bundle=org.buildingapp.buildingapp
 
       - name: Install kivymd via pip
         run: |
