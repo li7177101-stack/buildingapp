@@ -36,30 +36,33 @@ jobs:
 
       - name: Create Xcode project
         run: |
+          echo "=== Creating Xcode project ==="
           python -m kivy_ios.toolchain create BuildingApp ./main.py
-
-      - name: Debug - List directories
-        run: |
-          echo "=== Current directory ==="
+          echo "=== Check if ios directory was created ==="
           ls -la
-          echo "=== ios directory ==="
-          ls -la ios/ || echo "ios directory not found"
-          echo "=== ios directory contents ==="
-          find ios -name "*.plist" -type f 2>/dev/null || echo "No plist files found"
+          if [ -d "ios" ]; then
+            echo "✅ ios directory exists"
+            ls -la ios/
+          else
+            echo "❌ ios directory does NOT exist"
+            exit 1
+          fi
 
       - name: Set bundle identifier and version
         run: |
+          echo "=== Setting bundle identifier ==="
+          ls -la ios/
           cd ios
-          # 查找 Info.plist 的实际位置
           INFO_PLIST=$(find . -name "Info.plist" -type f | head -1)
           echo "Found Info.plist at: $INFO_PLIST"
           if [ -n "$INFO_PLIST" ]; then
             /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier org.buildingapp.buildingapp" "$INFO_PLIST"
             /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" "$INFO_PLIST"
             /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1" "$INFO_PLIST"
-            echo "Bundle identifier set successfully"
+            echo "✅ Bundle identifier set successfully"
           else
-            echo "Warning: Info.plist not found"
+            echo "❌ Warning: Info.plist not found"
+            exit 1
           fi
 
       - name: Install kivymd via pip
@@ -85,9 +88,9 @@ jobs:
               <true/>
           </dict>
           EOF
-            echo "Permissions added successfully"
+            echo "✅ Permissions added successfully"
           else
-            echo "Warning: Info.plist not found, skipping permissions"
+            echo "❌ Warning: Info.plist not found"
           fi
 
       - name: Build for Simulator
@@ -108,9 +111,9 @@ jobs:
           if [ -d "BuildingApp.app" ]; then
             zip -r BuildingApp.app.zip BuildingApp.app
             mv BuildingApp.app.zip ../../../../BuildingApp-simulator.zip
-            echo "App packaged successfully"
+            echo "✅ App packaged successfully"
           else
-            echo "Error: BuildingApp.app not found"
+            echo "❌ Error: BuildingApp.app not found"
             exit 1
           fi
 
