@@ -37,23 +37,36 @@ jobs:
       - name: Set bundle identifier and version
         run: |
           cd buildingapp-ios
-          # 使用 buildingapp-Info.plist 文件
           /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier org.buildingapp.buildingapp" buildingapp-Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" buildingapp-Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1" buildingapp-Info.plist
           echo "✅ Bundle identifier set successfully"
 
+      - name: Debug - Check dist directory structure
+        run: |
+          echo "=== dist directory ==="
+          ls -la dist/
+          echo "=== dist/root directory ==="
+          ls -la dist/root/ || echo "root not found"
+          echo "=== dist/root/python3 directory ==="
+          ls -la dist/root/python3/ || echo "python3 not found"
+          echo "=== dist/root/python3/bin directory ==="
+          ls -la dist/root/python3/bin/ || echo "bin not found"
+
       - name: Install kivymd via pip
         run: |
           cd buildingapp-ios
-          # 找到正确的 Python 路径
-          PYTHON_PATH=$(find ../dist -name "python3" -type f 2>/dev/null | head -1)
-          if [ -n "$PYTHON_PATH" ]; then
-            $PYTHON_PATH -m pip install kivymd==1.1.1
+          # 尝试多个可能的 Python 路径
+          if [ -f "../dist/root/python3/bin/python3" ]; then
+            ../dist/root/python3/bin/python3 -m pip install kivymd==1.1.1
+            echo "✅ kivymd installed successfully"
+          elif [ -f "../dist/root/python3/bin/python" ]; then
+            ../dist/root/python3/bin/python -m pip install kivymd==1.1.1
             echo "✅ kivymd installed successfully"
           else
-            echo "❌ Python not found in dist directory"
-            ls -la ../dist/
+            echo "❌ Python not found"
+            echo "Searching for python in dist..."
+            find ../dist -name "python*" -type f 2>/dev/null
             exit 1
           fi
 
