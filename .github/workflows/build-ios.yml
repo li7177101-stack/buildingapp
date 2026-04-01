@@ -43,7 +43,6 @@ jobs:
             --bundle=org.buildingapp.buildingapp \
             ./main.py
           
-          # 添加权限配置到 Info.plist
           cd ios/BuildingApp-ios/BuildingApp
           cat >> Info.plist << 'EOF'
           <key>NSCameraUsageDescription</key>
