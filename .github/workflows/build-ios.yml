@@ -6,8 +6,7 @@ jobs:
     runs-on: macos-latest
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -34,21 +33,19 @@ jobs:
         run: |
           python -m kivy_ios.toolchain create BuildingApp ./main.py
 
-      - name: Set bundle identifier and version
+      - name: Set bundle identifier
         run: |
           cd buildingapp-ios
           /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier org.buildingapp.buildingapp" buildingapp-Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" buildingapp-Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1" buildingapp-Info.plist
-          echo "✅ Bundle identifier set successfully"
 
-      - name: Install kivymd via pip
+      - name: Install kivymd
         run: |
           cd buildingapp-ios
           ../dist/hostpython3/bin/python3 -m pip install kivymd==1.1.1
-          echo "✅ kivymd installed successfully"
 
-      - name: Add permissions to Info.plist
+      - name: Add permissions
         run: |
           cd buildingapp-ios
           /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 需要相机权限来拍摄图片进行图生图转换" buildingapp-Info.plist || true
@@ -56,12 +53,10 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 需要保存生成的图片到相册" buildingapp-Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" buildingapp-Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" buildingapp-Info.plist || true
-          echo "✅ Permissions added successfully"
 
-      - name: Build for Simulator (ignore script errors)
+      - name: Build for Simulator
         run: |
           cd buildingapp-ios
-          set +e  # 禁用错误退出
           xcodebuild -project buildingapp.xcodeproj \
             -scheme buildingapp \
             -configuration Release \
@@ -69,29 +64,26 @@ jobs:
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
-          BUILD_EXIT_CODE=$?
-          echo "Build exit code: $BUILD_EXIT_CODE"
-          # 即使构建返回非0，也检查 app 是否生成
-          set -e
-          
-      - name: Package Simulator App
+            CODE_SIGNING_ALLOWED=NO \
+            ARCHS="arm64" \
+            VALID_ARCHS="arm64" \
+            ONLY_ACTIVE_ARCH=YES
+
+      - name: Package
         run: |
           cd buildingapp-ios
           APP_PATH="build/Build/Products/Release-iphonesimulator/buildingapp.app"
           if [ -d "$APP_PATH" ]; then
-            zip -r BuildingApp-simulator.zip "$APP_PATH"
-            mv BuildingApp-simulator.zip ../
-            echo "✅ App packaged successfully"
+            zip -r buildingapp-simulator.zip "$APP_PATH"
+            echo "✅ Success"
           else
-            echo "❌ Error: buildingapp.app not found"
-            echo "Available directories:"
-            ls -la build/Build/Products/Release-iphonesimulator/ || echo "Directory not found"
+            echo "❌ App not found"
+            ls -la build/Build/Products/Release-iphonesimulator/ || true
             exit 1
           fi
 
-      - name: Upload Simulator App
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: BuildingApp-simulator
-          path: BuildingApp-simulator.zip
+          name: buildingapp-simulator
+          path: buildingapp-ios/buildingapp-simulator.zip
