@@ -33,6 +33,15 @@ jobs:
         run: |
           python -m kivy_ios.toolchain create BuildingApp ./main.py
 
+      - name: Create symlink for main.py
+        run: |
+          cd buildingapp-ios
+          # 删除可能存在的 main.py 目录
+          rm -rf main.py
+          # 创建符号链接
+          ln -s ../main.py main.py
+          echo "✅ Created symlink main.py -> ../main.py"
+
       - name: Set bundle identifier
         run: |
           cd buildingapp-ios
@@ -54,18 +63,9 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" buildingapp-Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" buildingapp-Info.plist || true
 
-      - name: Remove problematic script from Xcode project
-        run: |
-          cd buildingapp-ios
-          # 删除包含 rsync 命令的脚本文件
-          find . -name "*.sh" -exec grep -l "rsync.*main.py" {} \; -delete
-          # 或者直接删除 build 目录重新构建
-          rm -rf build
-
       - name: Build for Simulator
         run: |
           cd buildingapp-ios
-          # 使用 xcodebuild 直接构建，不运行脚本
           xcodebuild -project buildingapp.xcodeproj \
             -scheme buildingapp \
             -configuration Release \
@@ -73,8 +73,7 @@ jobs:
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            GCC_PREPROCESSOR_DEFINITIONS='$GCC_PREPROCESSOR_DEFINITIONS SKIP_SCRIPT=1'
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Package
         run: |
@@ -85,7 +84,6 @@ jobs:
             echo "✅ Success"
           else
             echo "❌ App not found"
-            ls -la build/Build/Products/Release-iphonesimulator/ || true
             exit 1
           fi
 
