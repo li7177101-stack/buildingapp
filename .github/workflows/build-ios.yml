@@ -1,4 +1,4 @@
-name: Build iOS App
+name: Build iOS App (Device)
 on: [push, workflow_dispatch]
 
 jobs:
@@ -33,16 +33,12 @@ jobs:
         run: |
           python -m kivy_ios.toolchain create BuildingApp ./main.py
 
-      - name: Create fake main.py directory for rsync
+      - name: Create fake main.py directory
         run: |
           cd buildingapp-ios
-          # 删除可能存在的 main.py 文件或链接
           rm -rf main.py
-          # 创建空的 main.py 目录
           mkdir -p main.py
-          # 复制实际的 main.py 内容到目录中
           cp ../main.py main.py/
-          echo "✅ Created fake main.py directory"
 
       - name: Set bundle identifier
         run: |
@@ -65,26 +61,27 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" buildingapp-Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" buildingapp-Info.plist || true
 
-      - name: Build for Simulator
+      - name: Build for Device
         run: |
           cd buildingapp-ios
           xcodebuild -project buildingapp.xcodeproj \
             -scheme buildingapp \
             -configuration Release \
-            -sdk iphonesimulator \
+            -sdk iphoneos \
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            ARCHS="arm64" \
+            VALID_ARCHS="arm64"
 
       - name: Package
         run: |
           cd buildingapp-ios
-          APP_PATH="build/Build/Products/Release-iphonesimulator/buildingapp.app"
+          APP_PATH="build/Build/Products/Release-iphoneos/buildingapp.app"
           if [ -d "$APP_PATH" ]; then
-            # 复制实际的 main.py 到 app bundle（覆盖目录）
-            cp ../main.py "$APP_PATH/main.py"
-            zip -r buildingapp-simulator.zip "$APP_PATH"
+            cp ../main.py "$APP_PATH/"
+            zip -r buildingapp-device.zip "$APP_PATH"
             echo "✅ Success"
           else
             echo "❌ App not found"
@@ -94,5 +91,5 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: buildingapp-simulator
-          path: buildingapp-ios/buildingapp-simulator.zip
+          name: buildingapp-device
+          path: buildingapp-ios/buildingapp-device.zip
