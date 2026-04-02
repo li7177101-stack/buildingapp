@@ -44,7 +44,6 @@ jobs:
 
       - name: Install kivymd via pip
         run: |
-          # 使用 hostpython3 的 Python 安装 kivymd
           cd buildingapp-ios
           ../dist/hostpython3/bin/python3 -m pip install kivymd==1.1.1
           echo "✅ kivymd installed successfully"
@@ -59,17 +58,50 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" buildingapp-Info.plist || true
           echo "✅ Permissions added successfully"
 
+      - name: Debug - List buildingapp-ios directory
+        run: |
+          echo "=== buildingapp-ios directory contents ==="
+          ls -la buildingapp-ios/
+          echo "=== Find .xcodeproj and .xcworkspace ==="
+          find buildingapp-ios -name "*.xcodeproj" -type d
+          find buildingapp-ios -name "*.xcworkspace" -type d
+
       - name: Build for Simulator
         run: |
           cd buildingapp-ios
-          xcodebuild -workspace buildingapp.xcworkspace \
-            -scheme buildingapp \
-            -configuration Release \
-            -sdk iphonesimulator \
-            -derivedDataPath build \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+          # 查找 workspace 或 xcodeproj
+          if [ -f "buildingapp.xcworkspace" ]; then
+            xcodebuild -workspace buildingapp.xcworkspace \
+              -scheme buildingapp \
+              -configuration Release \
+              -sdk iphonesimulator \
+              -derivedDataPath build \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_ALLOWED=NO
+          elif [ -f "BuildingApp.xcworkspace" ]; then
+            xcodebuild -workspace BuildingApp.xcworkspace \
+              -scheme BuildingApp \
+              -configuration Release \
+              -sdk iphonesimulator \
+              -derivedDataPath build \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_ALLOWED=NO
+          elif [ -f "buildingapp.xcodeproj" ]; then
+            xcodebuild -project buildingapp.xcodeproj \
+              -scheme buildingapp \
+              -configuration Release \
+              -sdk iphonesimulator \
+              -derivedDataPath build \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_ALLOWED=NO
+          else
+            echo "❌ No Xcode project or workspace found"
+            ls -la
+            exit 1
+          fi
 
       - name: Package Simulator App
         run: |
@@ -78,8 +110,12 @@ jobs:
             zip -r BuildingApp.app.zip buildingapp.app
             mv BuildingApp.app.zip ../../../../
             echo "✅ App packaged successfully"
+          elif [ -d "BuildingApp.app" ]; then
+            zip -r BuildingApp.app.zip BuildingApp.app
+            mv BuildingApp.app.zip ../../../../
+            echo "✅ App packaged successfully"
           else
-            echo "❌ Error: buildingapp.app not found"
+            echo "❌ Error: .app not found"
             ls -la
             exit 1
           fi
