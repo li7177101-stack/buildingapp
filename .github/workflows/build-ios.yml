@@ -61,8 +61,8 @@ jobs:
       - name: Fix the copy script in Xcode project
         run: |
           cd buildingapp-ios
-          # 修改 project.pbxproj 中的脚本，将复制目录改为复制文件
-          sed -i '' 's/rsync -av --delete "$SRCROOT\/..\/main.py\/" "$TARGET_BUILD_DIR\/$CONTENTS_FOLDER_PATH\/main.py"/rsync -av "$SRCROOT\/..\/main.py" "$TARGET_BUILD_DIR\/$CONTENTS_FOLDER_PATH\/main.py"/g' buildingapp.xcodeproj/project.pbxproj
+          # 直接修改 project.pbxproj 中的脚本内容
+          sed -i '' 's|rsync -av --delete "$SRCROOT/../main.py/" "$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/main.py"|rsync -av "$SRCROOT/../main.py" "$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/main.py"|g' buildingapp.xcodeproj/project.pbxproj
           echo "✅ Fixed copy script"
 
       - name: Build for Simulator
