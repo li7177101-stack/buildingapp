@@ -54,9 +54,18 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" buildingapp-Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" buildingapp-Info.plist || true
 
+      - name: Remove problematic script from Xcode project
+        run: |
+          cd buildingapp-ios
+          # 删除包含 rsync 命令的脚本文件
+          find . -name "*.sh" -exec grep -l "rsync.*main.py" {} \; -delete
+          # 或者直接删除 build 目录重新构建
+          rm -rf build
+
       - name: Build for Simulator
         run: |
           cd buildingapp-ios
+          # 使用 xcodebuild 直接构建，不运行脚本
           xcodebuild -project buildingapp.xcodeproj \
             -scheme buildingapp \
             -configuration Release \
@@ -65,9 +74,7 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            ARCHS="arm64" \
-            VALID_ARCHS="arm64" \
-            ONLY_ACTIVE_ARCH=YES
+            GCC_PREPROCESSOR_DEFINITIONS='$GCC_PREPROCESSOR_DEFINITIONS SKIP_SCRIPT=1'
 
       - name: Package
         run: |
