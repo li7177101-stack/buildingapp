@@ -58,50 +58,19 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" buildingapp-Info.plist || true
           echo "✅ Permissions added successfully"
 
-      - name: Debug - List buildingapp-ios directory
-        run: |
-          echo "=== buildingapp-ios directory contents ==="
-          ls -la buildingapp-ios/
-          echo "=== Find .xcodeproj and .xcworkspace ==="
-          find buildingapp-ios -name "*.xcodeproj" -type d
-          find buildingapp-ios -name "*.xcworkspace" -type d
-
       - name: Build for Simulator
         run: |
           cd buildingapp-ios
-          # 查找 workspace 或 xcodeproj
-          if [ -f "buildingapp.xcworkspace" ]; then
-            xcodebuild -workspace buildingapp.xcworkspace \
-              -scheme buildingapp \
-              -configuration Release \
-              -sdk iphonesimulator \
-              -derivedDataPath build \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO
-          elif [ -f "BuildingApp.xcworkspace" ]; then
-            xcodebuild -workspace BuildingApp.xcworkspace \
-              -scheme BuildingApp \
-              -configuration Release \
-              -sdk iphonesimulator \
-              -derivedDataPath build \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO
-          elif [ -f "buildingapp.xcodeproj" ]; then
-            xcodebuild -project buildingapp.xcodeproj \
-              -scheme buildingapp \
-              -configuration Release \
-              -sdk iphonesimulator \
-              -derivedDataPath build \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO
-          else
-            echo "❌ No Xcode project or workspace found"
-            ls -la
-            exit 1
-          fi
+          echo "=== Available schemes ==="
+          xcodebuild -list -project buildingapp.xcodeproj
+          xcodebuild -project buildingapp.xcodeproj \
+            -scheme buildingapp \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Package Simulator App
         run: |
@@ -110,12 +79,8 @@ jobs:
             zip -r BuildingApp.app.zip buildingapp.app
             mv BuildingApp.app.zip ../../../../
             echo "✅ App packaged successfully"
-          elif [ -d "BuildingApp.app" ]; then
-            zip -r BuildingApp.app.zip BuildingApp.app
-            mv BuildingApp.app.zip ../../../../
-            echo "✅ App packaged successfully"
           else
-            echo "❌ Error: .app not found"
+            echo "❌ Error: buildingapp.app not found"
             ls -la
             exit 1
           fi
