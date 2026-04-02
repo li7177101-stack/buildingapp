@@ -33,14 +33,16 @@ jobs:
         run: |
           python -m kivy_ios.toolchain create BuildingApp ./main.py
 
-      - name: Create symlink for main.py
+      - name: Create fake main.py directory for rsync
         run: |
           cd buildingapp-ios
-          # 删除可能存在的 main.py 目录
+          # 删除可能存在的 main.py 文件或链接
           rm -rf main.py
-          # 创建符号链接
-          ln -s ../main.py main.py
-          echo "✅ Created symlink main.py -> ../main.py"
+          # 创建空的 main.py 目录
+          mkdir -p main.py
+          # 复制实际的 main.py 内容到目录中
+          cp ../main.py main.py/
+          echo "✅ Created fake main.py directory"
 
       - name: Set bundle identifier
         run: |
@@ -80,6 +82,8 @@ jobs:
           cd buildingapp-ios
           APP_PATH="build/Build/Products/Release-iphonesimulator/buildingapp.app"
           if [ -d "$APP_PATH" ]; then
+            # 复制实际的 main.py 到 app bundle（覆盖目录）
+            cp ../main.py "$APP_PATH/main.py"
             zip -r buildingapp-simulator.zip "$APP_PATH"
             echo "✅ Success"
           else
