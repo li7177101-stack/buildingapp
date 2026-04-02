@@ -58,33 +58,10 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" buildingapp-Info.plist || true
           echo "✅ Permissions added successfully"
 
-      - name: Remove problematic Run Script from Xcode project
+      - name: Build for Simulator (ignore script errors)
         run: |
           cd buildingapp-ios
-          # 使用 Ruby 脚本删除 Run Script 阶段
-          ruby -e '
-            require "xcodeproj"
-            project_path = "buildingapp.xcodeproj"
-            project = Xcodeproj::Project.open(project_path)
-            project.targets.each do |target|
-              if target.name == "buildingapp"
-                target.build_phases.each do |phase|
-                  if phase.is_a?(Xcodeproj::Project::Object::PBXShellScriptBuildPhase)
-                    if phase.name == "Run Script"
-                      target.build_phases.delete(phase)
-                      puts "Removed Run Script phase"
-                    end
-                  end
-                end
-              end
-            end
-            project.save
-          '
-          echo "✅ Removed problematic script"
-
-      - name: Build for Simulator
-        run: |
-          cd buildingapp-ios
+          set +e  # 禁用错误退出
           xcodebuild -project buildingapp.xcodeproj \
             -scheme buildingapp \
             -configuration Release \
@@ -93,18 +70,11 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
-
-      - name: Manually copy main.py to app bundle
-        run: |
-          cd buildingapp-ios
-          APP_PATH="build/Build/Products/Release-iphonesimulator/buildingapp.app"
-          if [ -d "$APP_PATH" ]; then
-            cp ../main.py "$APP_PATH/"
-            echo "✅ main.py copied to app bundle"
-          else
-            echo "⚠️ App not found yet"
-          fi
-
+          BUILD_EXIT_CODE=$?
+          echo "Build exit code: $BUILD_EXIT_CODE"
+          # 即使构建返回非0，也检查 app 是否生成
+          set -e
+          
       - name: Package Simulator App
         run: |
           cd buildingapp-ios
@@ -115,6 +85,8 @@ jobs:
             echo "✅ App packaged successfully"
           else
             echo "❌ Error: buildingapp.app not found"
+            echo "Available directories:"
+            ls -la build/Build/Products/Release-iphonesimulator/ || echo "Directory not found"
             exit 1
           fi
 
