@@ -58,18 +58,9 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" buildingapp-Info.plist || true
           echo "✅ Permissions added successfully"
 
-      - name: Manually copy main.py to app bundle
+      - name: Build for Simulator
         run: |
           cd buildingapp-ios
-          # 创建 app bundle 目录并复制 main.py
-          mkdir -p build/Release-iphonesimulator/buildingapp.app
-          cp ../main.py build/Release-iphonesimulator/buildingapp.app/
-          echo "✅ main.py copied manually"
-
-      - name: Build for Simulator (skip script)
-        run: |
-          cd buildingapp-ios
-          # 先构建，忽略脚本错误
           xcodebuild -project buildingapp.xcodeproj \
             -scheme buildingapp \
             -configuration Release \
@@ -77,27 +68,18 @@ jobs:
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            ONLY_ACTIVE_ARCH=NO || true
-          
-          # 如果构建失败但 app 已生成，继续
-          if [ -d "build/Build/Products/Release-iphonesimulator/buildingapp.app" ]; then
-            echo "✅ App built successfully"
-          else
-            echo "❌ App build failed"
-            exit 1
-          fi
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Package Simulator App
         run: |
-          cd buildingapp-ios/build/Build/Products/Release-iphonesimulator
-          if [ -d "buildingapp.app" ]; then
-            zip -r BuildingApp.app.zip buildingapp.app
-            mv BuildingApp.app.zip ../../../../
+          cd buildingapp-ios
+          APP_PATH="build/Build/Products/Release-iphonesimulator/buildingapp.app"
+          if [ -d "$APP_PATH" ]; then
+            zip -r BuildingApp-simulator.zip "$APP_PATH"
+            mv BuildingApp-simulator.zip ../
             echo "✅ App packaged successfully"
           else
             echo "❌ Error: buildingapp.app not found"
-            ls -la
             exit 1
           fi
 
@@ -105,4 +87,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: BuildingApp-simulator
-          path: BuildingApp.app.zip
+          path: BuildingApp-simulator.zip
