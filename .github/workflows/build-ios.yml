@@ -58,11 +58,16 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" buildingapp-Info.plist || true
           echo "✅ Permissions added successfully"
 
+      - name: Fix the copy script in Xcode project
+        run: |
+          cd buildingapp-ios
+          # 修改 project.pbxproj 中的脚本，将复制目录改为复制文件
+          sed -i '' 's/rsync -av --delete "$SRCROOT\/..\/main.py\/" "$TARGET_BUILD_DIR\/$CONTENTS_FOLDER_PATH\/main.py"/rsync -av "$SRCROOT\/..\/main.py" "$TARGET_BUILD_DIR\/$CONTENTS_FOLDER_PATH\/main.py"/g' buildingapp.xcodeproj/project.pbxproj
+          echo "✅ Fixed copy script"
+
       - name: Build for Simulator
         run: |
           cd buildingapp-ios
-          echo "=== Available schemes ==="
-          xcodebuild -list -project buildingapp.xcodeproj
           xcodebuild -project buildingapp.xcodeproj \
             -scheme buildingapp \
             -configuration Release \
