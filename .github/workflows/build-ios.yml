@@ -33,12 +33,15 @@ jobs:
         run: |
           python -m kivy_ios.toolchain create BuildingApp ./main.py
 
-      - name: Create fake main.py directory
+      - name: Remove problematic Run Script from project.pbxproj
         run: |
           cd buildingapp-ios
-          rm -rf main.py
-          mkdir -p main.py
-          cp ../main.py main.py/
+          # 备份原文件
+          cp buildingapp.xcodeproj/project.pbxproj buildingapp.xcodeproj/project.pbxproj.bak
+          # 删除包含 rsync 的脚本行
+          sed -i '' '/rsync.*main.py/d' buildingapp.xcodeproj/project.pbxproj
+          sed -i '' '/Script-113D17E2153E3DB5001310A5/d' buildingapp.xcodeproj/project.pbxproj
+          echo "✅ Removed problematic script"
 
       - name: Set bundle identifier
         run: |
@@ -72,8 +75,7 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            ARCHS="arm64" \
-            VALID_ARCHS="arm64"
+            ARCHS="arm64"
 
       - name: Package
         run: |
