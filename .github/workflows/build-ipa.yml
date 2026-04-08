@@ -74,12 +74,25 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             ARCHS="arm64"
 
+      - name: Copy source folders to app bundle
+        run: |
+          cd buildingapp-ios
+          APP_PATH="build/Build/Products/Release-iphoneos/buildingapp.app"
+          if [ -d "$APP_PATH" ]; then
+            cp -r ../building_app "$APP_PATH/"
+            cp -r ../images "$APP_PATH/"
+            cp ../building.kv "$APP_PATH/" 2>/dev/null || true
+            echo "✅ Source folders copied"
+          else
+            echo "❌ App not found"
+            exit 1
+          fi
+
       - name: Create IPA
         run: |
           cd buildingapp-ios
           APP_PATH="build/Build/Products/Release-iphoneos/buildingapp.app"
           if [ -d "$APP_PATH" ]; then
-            cp ../main.py "$APP_PATH/"
             mkdir -p Payload
             cp -r "$APP_PATH" Payload/
             zip -r buildingapp.ipa Payload
