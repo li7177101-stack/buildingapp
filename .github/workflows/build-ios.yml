@@ -33,15 +33,12 @@ jobs:
         run: |
           python -m kivy_ios.toolchain create BuildingApp ./main.py
 
-      - name: Remove problematic Run Script from project.pbxproj
+      - name: Remove problematic Run Script
         run: |
           cd buildingapp-ios
-          # 备份原文件
           cp buildingapp.xcodeproj/project.pbxproj buildingapp.xcodeproj/project.pbxproj.bak
-          # 删除包含 rsync 的脚本行
           sed -i '' '/rsync.*main.py/d' buildingapp.xcodeproj/project.pbxproj
           sed -i '' '/Script-113D17E2153E3DB5001310A5/d' buildingapp.xcodeproj/project.pbxproj
-          echo "✅ Removed problematic script"
 
       - name: Set bundle identifier
         run: |
@@ -77,21 +74,38 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             ARCHS="arm64"
 
-      - name: Package
+      - name: Copy source folders to app bundle
         run: |
           cd buildingapp-ios
           APP_PATH="build/Build/Products/Release-iphoneos/buildingapp.app"
           if [ -d "$APP_PATH" ]; then
+            cp -r ../building_app "$APP_PATH/" 2>/dev/null || echo "building_app not found"
+            cp -r ../images "$APP_PATH/" 2>/dev/null || echo "images not found"
+            cp ../building.kv "$APP_PATH/" 2>/dev/null || echo "building.kv not found"
             cp ../main.py "$APP_PATH/"
-            zip -r buildingapp-device.zip "$APP_PATH"
-            echo "✅ Success"
+            echo "✅ Source folders copied"
+            ls -la "$APP_PATH/"
           else
             echo "❌ App not found"
             exit 1
           fi
 
-      - name: Upload
+      - name: Create IPA
+        run: |
+          cd buildingapp-ios
+          APP_PATH="build/Build/Products/Release-iphoneos/buildingapp.app"
+          if [ -d "$APP_PATH" ]; then
+            mkdir -p Payload
+            cp -r "$APP_PATH" Payload/
+            zip -r buildingapp.ipa Payload
+            echo "✅ IPA created successfully"
+          else
+            echo "❌ App not found"
+            exit 1
+          fi
+
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: buildingapp-device
-          path: buildingapp-ios/buildingapp-device.zip
+          name: buildingapp-ipa
+          path: buildingapp-ios/buildingapp.ipa
